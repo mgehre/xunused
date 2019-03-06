@@ -180,8 +180,8 @@ public:
     }
   }
 
-  llvm::SmallPtrSet<const FunctionDecl *, 32> Defs;
-  llvm::SmallPtrSet<const FunctionDecl *, 32> Uses;
+  std::set<const FunctionDecl *> Defs;
+  std::set<const FunctionDecl *> Uses;
 };
 
 class XUnusedASTConsumer : public ASTConsumer {
