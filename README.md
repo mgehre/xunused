@@ -2,7 +2,7 @@
 `xunused` is a tool to find unused C/C++ functions and methods across source files in the whole project.
 It is built upon clang to parse the source code (in parallel). It then shows all functions that had
 a definition but no use. Templates, virtual functions, constructors, functions with `static` linkage are
-all taken into account. If you find an issue, please open a issue on https://github.com/mgehre/xunused or fill a pull request.
+all taken into account. If you find an issue, please open a issue on https://github.com/mgehre/xunused or file a pull request.
 
 ## Building and Installation
 First download or build LLVM 8 and Clang 8 with development headers.
