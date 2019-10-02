@@ -1,0 +1,19 @@
+name: C/C++ CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: install ninja
+      run: sudo apt-get -y install ninja-build
+    - name: install apt.llvm.org repo
+      run: wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && sudo ./llvm.sh 8
+    - name: install clang-dev
+      run: sudo apt-get -y install llvm-8-dev libclang-8-dev
+    - name: build
+      run: mkdir build && cd build && cmake .. && make
