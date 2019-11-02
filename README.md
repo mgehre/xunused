@@ -10,6 +10,7 @@ On Debian and Ubuntu, this can easily be done via http://apt.llvm.org/ and `apt 
 Then build via
 ```
 mkdir build
+cd build
 cmake ..
 make
 ```
