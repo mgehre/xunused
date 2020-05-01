@@ -5,8 +5,8 @@ a definition but no use. Templates, virtual functions, constructors, functions w
 all taken into account. If you find an issue, please open a issue on https://github.com/mgehre/xunused or file a pull request.
 
 ## Building and Installation
-First download or build LLVM 8 and Clang 8 with development headers.
-On Debian and Ubuntu, this can easily be done via http://apt.llvm.org/ and `apt install llvm-8-dev libclang-8-dev`.
+First download or build LLVM 10 and Clang 10 with development headers.
+On Debian and Ubuntu, this can easily be done via http://apt.llvm.org/ and `apt install llvm-10-dev libclang-10-dev`.
 Then build via
 ```
 mkdir build
