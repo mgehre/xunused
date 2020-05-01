@@ -25,4 +25,4 @@ cd build
 You can specify the option `-filter` together with a regular expressions. Only files who's path is matching the regular
 expression will be analyzed. You might want to exclude your test's source code to find functions that are only used by tests but not any other code.
 
-If `xunused` complains about missing include files such as `stddef.h`, try adding `-extra-arg=-I/usr/include/clang/8/include` (or similar) to the arguments.
+If `xunused` complains about missing include files such as `stddef.h`, try adding `-extra-arg=-I/usr/include/clang/10/include` (or similar) to the arguments.
