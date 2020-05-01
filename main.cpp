@@ -9,7 +9,10 @@
 #include "clang/Tooling/AllTUsExecution.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/Signals.h"
+#include <memory>
+#include <mutex>
 #include <map>
+
 
 using namespace clang;
 using namespace clang::ast_matchers;
@@ -210,13 +213,13 @@ class XUnusedFrontendAction : public ASTFrontendAction {
 public:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance & /*CI*/,
                                                  StringRef /*File*/) override {
-    return llvm::make_unique<XUnusedASTConsumer>();
+    return std::make_unique<XUnusedASTConsumer>();
   }
 };
 
 class XUnusedFrontendActionFactory : public tooling::FrontendActionFactory {
 public:
-  FrontendAction *create() override { return new XUnusedFrontendAction(); }
+  std::unique_ptr<FrontendAction> create() override { return std::make_unique<XUnusedFrontendAction>(); }
 };
 
 int main(int argc, const char **argv) {
