@@ -55,7 +55,7 @@ std::vector<DeclLoc> getDeclarations(const FunctionDecl *F,
     if (R->doesThisDeclarationHaveABody())
       continue;
     auto Begin = R->getSourceRange().getBegin();
-    Decls.emplace_back(SM.getFilename(Begin), SM.getSpellingLineNumber(Begin));
+    Decls.emplace_back(SM.getFilename(Begin).str(), SM.getSpellingLineNumber(Begin));
     SM.getFileManager().makeAbsolutePath(Decls.back().Filename);
   }
   return Decls;
