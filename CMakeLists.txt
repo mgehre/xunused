@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 2.8.8)
 project(xunused)
 
-find_package(LLVM 10 REQUIRED CONFIG)
-
+find_package(LLVM 10 CONFIG)
+if(NOT LLVM_FOUND)
+  find_package(LLVM 11 CONFIG)
+endif()
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
