@@ -172,6 +172,11 @@ public:
       llvm::errs() << " USR:" << USR << "\n";
 #endif
       Defs.insert(F->getCanonicalDecl());
+
+      // __attribute__((constructor())) are always used
+      if (F->hasAttr<ConstructorAttr>())
+        handleUse(F, Result.SourceManager);
+
     } else if (const auto *R = Result.Nodes.getNodeAs<DeclRefExpr>("declRef")) {
       handleUse(R->getDecl(), Result.SourceManager);
     } else if (const auto *R =
