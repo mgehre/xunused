@@ -17,6 +17,17 @@
 using namespace clang;
 using namespace clang::ast_matchers;
 
+template <class T, class Comp, class Alloc, class Predicate>
+void discard_if(std::set<T, Comp, Alloc> &c, Predicate pred) {
+  for (auto it{c.begin()}, end{c.end()}; it != end;) {
+    if (pred(*it)) {
+      it = c.erase(it);
+    } else {
+      ++it;
+    }
+  }
+}
+
 struct DeclLoc {
   DeclLoc() = default;
   DeclLoc(std::string Filename, unsigned Line)
@@ -90,6 +101,12 @@ public:
 
       it_inserted.first->second.Declarations = getDeclarations(F, SM);
     }
+
+    // Weak functions are not the definitive definition. Remove it from
+    // Defs before checking which uses we need to consider in other TUs,
+    // so the functions overwritting the weak definition here are marked
+    // as used.
+    discard_if(Defs, [](const FunctionDecl *FD) { return FD->isWeak(); });
 
     std::vector<const FunctionDecl *> ExternalUses;
 
