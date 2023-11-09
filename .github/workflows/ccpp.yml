@@ -3,36 +3,36 @@ name: C/C++ CI
 on: [push, pull_request]
 
 jobs:
-  llvm10:
+  llvm:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        version: [13, 14, 15, 16, 17]
+        os: [ubuntu-22.04]
     
     steps:
-    - uses: actions/checkout@v1
-    - name: install ninja
-      run: sudo apt-get -y install ninja-build
-    - name: install apt.llvm.org repo
-      run: wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && sudo ./llvm.sh 10
-    - name: install clang-dev
-      run: sudo apt-get -y install llvm-10-dev libclang-10-dev
-    - name: build
-      run: mkdir build && cd build && cmake .. && make
-  
-  llvm11:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-    
-    steps:
-    - uses: actions/checkout@v1
-    - name: install ninja
-      run: sudo apt-get -y install ninja-build
-    - name: install apt.llvm.org repo
-      run: wget https://apt.llvm.org/llvm.sh && chmod +x llvm.sh && sudo ./llvm.sh 11
-    - name: install clang-dev
-      run: sudo apt-get -y install llvm-11-dev libclang-11-dev
-    - name: build
-      run: mkdir build && cd build && cmake .. && make
+    - uses: actions/checkout@v4
+
+    - name: Install package repository for Clang/LLVM ${{ matrix.version }}
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh ${{ matrix.version }}
+
+    - name: Install build prerequisites and Clang/LLVM ${{ matrix.version }}
+      run: |
+        sudo apt-get -y install build-essential \
+                                cmake \
+                                libcurl4-openssl-dev \
+                                libedit-dev \
+                                llvm-${{ matrix.version }}-dev \
+                                libclang-${{ matrix.version }}-dev
+
+    - name: Build xunused for Clang/LLVM ${{ matrix.version }}
+      run: |
+        mkdir build
+        cd build
+        cmake -DLLVM_VERSION_REQUIRED=${{ matrix.version }} ..
+        make
