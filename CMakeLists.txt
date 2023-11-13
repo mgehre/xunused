@@ -1,5 +1,14 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.7)
 project(xunused)
+
+# Let find_package(...) search for the latest version when multiple versions of
+# the same library are available. Therefore ...
+#
+#   1) set natural sort order to compare contiguous digits as whole numbers, and
+#   2) do ordering in descending mode to test latest found folder first.
+#
+set(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
+set(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
 
 find_package(LLVM  ${LLVM_VERSION_REQUIRED} CONFIG REQUIRED)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
