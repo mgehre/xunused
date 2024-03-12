@@ -4,11 +4,11 @@ It is built upon clang to parse the source code (in parallel). It then shows all
 a definition but no use. Templates, virtual functions, constructors, functions with `static` linkage are
 all taken into account. If you find an issue, please open a issue on https://github.com/mgehre/xunused or file a pull request.
 
-xunused is compatible with LLVM and Clang versions 13 to 17.
+xunused is compatible with LLVM and Clang versions 13 to 18.
 
 ## Building and Installation
 First download or build the necessary versions of LLVM and Clang with development headers.
-On Debian and Ubuntu, this can easily be done via [http://apt.llvm.org](http://apt.llvm.org) and `apt install llvm-17-dev libclang-17-dev`.
+On Debian and Ubuntu, this can easily be done via [http://apt.llvm.org](http://apt.llvm.org) and `apt install llvm-18-dev libclang-18-dev`.
 Then build via
 ```
 mkdir build
