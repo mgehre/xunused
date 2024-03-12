@@ -2,6 +2,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
+#include "clang/Basic/Version.h"
 #include "clang/Driver/Options.h"
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/FrontendActions.h"
@@ -113,13 +114,6 @@ public:
     std::set_difference(Uses.begin(), Uses.end(), Defs.begin(), Defs.end(),
                         std::back_inserter(ExternalUses));
 
-    /*for (auto *F : Uses) {
-        llvm::errs() << "Uses: " << F << " " << F->getNameAsString() << "\n";
-    }
-    for (auto *F : Defs) {
-        llvm::errs() << "Defs: " << F << " " << F->getNameAsString() << "\n";
-    }*/
-
     for (auto *F : ExternalUses) {
       // llvm::errs() << "ExternalUses: " << F->getNameAsString() << "\n";
       std::string USR;
@@ -175,7 +169,13 @@ public:
 
       auto *MD = dyn_cast<CXXMethodDecl>(F);
       if (MD) {
-        if (MD->isVirtual() && !MD->isPure() && MD->size_overridden_methods())
+        if (MD->isVirtual()
+        #if CLANG_VERSION_MAJOR >= 18
+          && !MD->isPureVirtual()
+        #else
+          && !MD->isPure()
+        #endif
+          && MD->size_overridden_methods())
           return; // overriding method
         if (isa<CXXDestructorDecl>(MD))
           return; // We don't see uses of destructors.
