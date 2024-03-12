@@ -26,6 +26,7 @@ jobs:
 
     - name: Install build prerequisites and Clang/LLVM ${{ matrix.version }}
       run: |
+        sudo apt-get -y remove llvm-14-dev llvm-15-dev
         sudo apt-get -y install build-essential \
                                 cmake \
                                 libcurl4-openssl-dev \
