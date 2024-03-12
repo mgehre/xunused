@@ -15,7 +15,11 @@ message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
 if (LLVM_VERSION_MAJOR GREATER_EQUAL 16)
-    find_package(Clang ${LLVM_VERSION_MAJOR} CONFIG REQUIRED)
+    if (LLVM_VERSION_MAJOR GREATER_EQUAL 18)
+        find_package(Clang ${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR} CONFIG REQUIRED)
+    else()
+        find_package(Clang ${LLVM_VERSION_MAJOR} CONFIG REQUIRED)
+    endif()
     message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
 endif (LLVM_VERSION_MAJOR GREATER_EQUAL 16)
 

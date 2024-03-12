@@ -1,6 +1,9 @@
 name: C/C++ CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: main
+  pull_request:
 
 jobs:
   llvm:
@@ -9,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [13, 14, 15, 16, 17]
+        version: [13, 14, 15, 16, 17, 18]
         os: [ubuntu-22.04]
     
     steps:
@@ -23,6 +26,7 @@ jobs:
 
     - name: Install build prerequisites and Clang/LLVM ${{ matrix.version }}
       run: |
+        sudo apt-get -y remove llvm-14-dev llvm-15-dev
         sudo apt-get -y install build-essential \
                                 cmake \
                                 libcurl4-openssl-dev \
@@ -33,6 +37,5 @@ jobs:
     - name: Build xunused for Clang/LLVM ${{ matrix.version }}
       run: |
         mkdir build
-        cd build
-        cmake -DLLVM_VERSION_REQUIRED=${{ matrix.version }} ..
-        make
+        cmake -B build
+        make -C build
