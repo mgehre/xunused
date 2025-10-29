@@ -38,7 +38,7 @@ struct DeclLoc {
 };
 
 struct DefInfo {
-  const FunctionDecl *Definition;
+  const FunctionDecl *Definition; // XXX: perhaps a dangling pointer (created during parsing a single TU)
   size_t Uses;
   std::string Name;
   std::string Filename;
@@ -52,12 +52,25 @@ std::map<std::string, DefInfo> AllDecls;
 bool getUSRForDecl(const Decl *Decl, std::string &USR) {
   llvm::SmallVector<char, 128> Buff;
 
+  // TODO: use idempotent Decl->getUSRForDecl()?
   if (index::generateUSRForDecl(Decl, Buff))
     return false;
 
   USR = std::string(Buff.data(), Buff.size());
   return true;
 }
+
+// TODO: use in Uses and Defs sets to exclude duplicates
+// (i.e., when multiple FunctionDecl reference a single object)
+struct FunctionDeclPtrLess {
+    bool operator()(const FunctionDecl *f1, const FunctionDecl *f2) const {
+        std::string USR1;
+        getUSRForDecl(f1, USR1);
+        std::string USR2;
+        getUSRForDecl(f2, USR2);
+        return USR1 < USR2;
+    }
+};
 
 /// Returns all declarations that are not the definition of F
 std::vector<DeclLoc> getDeclarations(const FunctionDecl *F,
@@ -80,11 +93,7 @@ public:
 
     std::vector<const FunctionDecl *> UnusedDefs;
 
-    std::set_difference(Defs.begin(), Defs.end(), Uses.begin(), Uses.end(),
-                        std::back_inserter(UnusedDefs));
-
-    for (auto *F : UnusedDefs) {
-      F = F->getDefinition();
+    for (auto *F : Defs) {
       assert(F);
       std::string USR;
       if (!getUSRForDecl(F, USR))
@@ -107,14 +116,9 @@ public:
     // Defs before checking which uses we need to consider in other TUs,
     // so the functions overwritting the weak definition here are marked
     // as used.
-    discard_if(Defs, [](const FunctionDecl *FD) { return FD->isWeak(); });
+    // discard_if(Defs, [](const FunctionDecl *FD) { return FD->isWeak(); });
 
-    std::vector<const FunctionDecl *> ExternalUses;
-
-    std::set_difference(Uses.begin(), Uses.end(), Defs.begin(), Defs.end(),
-                        std::back_inserter(ExternalUses));
-
-    for (auto *F : ExternalUses) {
+    for (auto *F : Uses) {
       // llvm::errs() << "ExternalUses: " << F->getNameAsString() << "\n";
       std::string USR;
       if (!getUSRForDecl(F, USR))
@@ -213,7 +217,7 @@ class XUnusedASTConsumer : public ASTConsumer {
 public:
   XUnusedASTConsumer() {
     Matcher.addMatcher(
-        functionDecl(isDefinition(), unless(isImplicit())).bind("fnDecl"),
+        functionDecl(unless(isImplicit())).bind("fnDecl"),
         &Handler);
     Matcher.addMatcher(declRefExpr().bind("declRef"), &Handler);
     Matcher.addMatcher(memberExpr().bind("memberRef"), &Handler);
