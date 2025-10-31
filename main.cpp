@@ -147,6 +147,21 @@ public:
 #endif
     Uses.insert(FD->getCanonicalDecl());
   }
+
+  void handleNewOrDelete(const FunctionDecl *decl, const MatchFinder::MatchResult &result) {
+      // Check if the function declaration is a method of a CXXRecordDecl
+      if (const CXXMethodDecl *methodDecl = dyn_cast<CXXMethodDecl>(decl)) {
+          // It is a class member function.
+          const CXXRecordDecl *recordDecl = methodDecl->getParent();
+
+          // Further check if it is part of a user-defined class (not a system header)
+          // and not the global operator new being called.
+          if (!recordDecl->isImplicit() && !result.SourceManager->isInSystemHeader(recordDecl->getBeginLoc())) {
+              handleUse(decl, result.SourceManager);
+          }
+      }
+  }
+
   void run(const MatchFinder::MatchResult &Result) override {
     if (const auto *F = Result.Nodes.getNodeAs<FunctionDecl>("fnDecl")) {
       if (!F->hasBody())
@@ -202,6 +217,14 @@ public:
     } else if (const auto *R = Result.Nodes.getNodeAs<CXXConstructExpr>(
                    "cxxConstructExpr")) {
       handleUse(R->getConstructor(), Result.SourceManager);
+    } else if (const auto *R = Result.Nodes.getNodeAs<CXXNewExpr>("cxxNewExpr")) {
+        if (const FunctionDecl *opNew = R->getOperatorNew()) {
+            handleNewOrDelete(opNew, Result);
+        }
+    } else if (const auto *R = Result.Nodes.getNodeAs<CXXDeleteExpr>("cxxDeleteExpr")) {
+        if (const FunctionDecl *opDelete = R->getOperatorDelete()) {
+            handleNewOrDelete(opDelete, Result);
+        }
     }
   }
 
@@ -215,6 +238,8 @@ public:
     Matcher.addMatcher(
         functionDecl(isDefinition(), unless(isImplicit())).bind("fnDecl"),
         &Handler);
+    Matcher.addMatcher(cxxNewExpr().bind("cxxNewExpr"), &Handler);
+    Matcher.addMatcher(cxxDeleteExpr().bind("cxxDeleteExpr"), &Handler);
     Matcher.addMatcher(declRefExpr().bind("declRef"), &Handler);
     Matcher.addMatcher(memberExpr().bind("memberRef"), &Handler);
     Matcher.addMatcher(cxxConstructExpr().bind("cxxConstructExpr"), &Handler);
