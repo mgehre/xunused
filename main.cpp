@@ -149,7 +149,6 @@ public:
   }
 
   void handleNewOrDelete(const FunctionDecl *decl, const MatchFinder::MatchResult &result) {
-      // Check if the function declaration is a method of a CXXRecordDecl
       if (const CXXMethodDecl *methodDecl = dyn_cast<CXXMethodDecl>(decl)) {
           // It is a class member function.
           const CXXRecordDecl *recordDecl = methodDecl->getParent();
