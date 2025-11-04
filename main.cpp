@@ -83,12 +83,14 @@ public:
     std::set_difference(Defs.begin(), Defs.end(), Uses.begin(), Uses.end(),
                         std::back_inserter(UnusedDefs));
 
-    for (auto *F : UnusedDefs) {
-      assert(F);
+    for (const auto declaration : UnusedDefs) {
       std::string USR;
-      if (!getUSRForDecl(F, USR))
+      if (!getUSRForDecl(declaration, USR))
         continue;
       // llvm::errs() << "UnusedDefs: " << USR << "\n";
+
+      const auto F = declaration->getDefinition();
+      assert(F);
       auto it_inserted = AllDecls.emplace(std::move(USR), DefInfo{F, 0});
       if (!it_inserted.second) {
         it_inserted.first->second.Definition = F;
