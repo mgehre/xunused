@@ -153,7 +153,6 @@ public:
 #endif
     Uses.insert(FD->getCanonicalDecl());
   }
-
   void run(const MatchFinder::MatchResult &Result) override {
     if (const auto *F = Result.Nodes.getNodeAs<FunctionDecl>("fnDecl")) {
       if (!F->hasBody())
