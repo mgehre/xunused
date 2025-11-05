@@ -209,16 +209,13 @@ public:
                    "cxxConstructExpr")) {
       handleUse(R->getConstructor(), Result.SourceManager);
     } else if (const auto *R = Result.Nodes.getNodeAs<CXXNewExpr>("cxxNewExpr")) {
-        if (const auto opNew = R->getOperatorNew()) {
+        if (const auto opNew = R->getOperatorNew())
             handleUse(opNew, Result.SourceManager);
-        }
-        if (const auto opDelete = R->getOperatorDelete()) {
+        if (const auto opDelete = R->getOperatorDelete())
             handleUse(opDelete, Result.SourceManager);
-        }
     } else if (const auto *R = Result.Nodes.getNodeAs<CXXDeleteExpr>("cxxDeleteExpr")) {
-        if (const auto opDelete = R->getOperatorDelete()) {
+        if (const auto opDelete = R->getOperatorDelete())
             handleUse(opDelete, Result.SourceManager);
-        }
     }
   }
 
