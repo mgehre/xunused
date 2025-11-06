@@ -211,6 +211,7 @@ public:
     } else if (const auto *R = Result.Nodes.getNodeAs<CXXNewExpr>("cxxNewExpr")) {
         if (const auto opNew = R->getOperatorNew())
             handleUse(opNew, Result.SourceManager);
+        // a new expression calls operator delete on initialization failures
         if (const auto opDelete = R->getOperatorDelete())
             handleUse(opDelete, Result.SourceManager);
     } else if (const auto *R = Result.Nodes.getNodeAs<CXXDeleteExpr>("cxxDeleteExpr")) {
