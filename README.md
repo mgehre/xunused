@@ -28,3 +28,15 @@ You can specify the option `-filter` together with a regular expressions. Only f
 expression will be analyzed. You might want to exclude your test's source code to find functions that are only used by tests but not any other code.
 
 If `xunused` complains about missing include files such as `stddef.h`, try adding `-extra-arg=-I/usr/include/clang/17/include` (or similar) to the arguments.
+
+## Development
+
+### Running Tests
+
+xunused includes a test suite using LLVM's lit testing framework. To run the tests:
+
+```bash
+cmake --build build --target check
+```
+
+For more information on running and writing tests, see [tests/README.md](tests/README.md).

@@ -90,18 +90,13 @@ install(TARGETS xunused DESTINATION bin)
 
 # Add a check target to run lit tests
 # Find lit.py in the LLVM installation
-file(GLOB_RECURSE LIT_PY_PATHS "${LLVM_LIBRARY_DIRS}/../build/utils/lit/lit.py")
-list(LENGTH LIT_PY_PATHS LIT_PY_COUNT)
-if(LIT_PY_COUNT GREATER 0)
-    list(GET LIT_PY_PATHS 0 LIT_PY)
+set(LIT_PY "${LLVM_LIBRARY_DIRS}/../build/utils/lit/lit.py")
+if(EXISTS "${LIT_PY}")
     message(STATUS "Found lit.py at: ${LIT_PY}")
-    
-    # Find LLVM tools directory (for FileCheck, etc.)
-    get_filename_component(LLVM_TOOLS_DIR "${LLVM_DIR}/../bin" ABSOLUTE)
     
     add_custom_target(check
         COMMAND ${CMAKE_COMMAND} -E env 
-            "PATH=$<TARGET_FILE_DIR:xunused>:${LLVM_TOOLS_DIR}:$ENV{PATH}"
+            "PATH=$<TARGET_FILE_DIR:xunused>:${LLVM_TOOLS_BINARY_DIR}:$ENV{PATH}"
             ${Python3_EXECUTABLE} ${LIT_PY} -v ${CMAKE_SOURCE_DIR}/tests
         DEPENDS xunused
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
