@@ -4,8 +4,9 @@
 //
 // RUN: rm -rf %t && mkdir -p %t
 // RUN: split-file %s %t
+// RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
 // RUN: xunused %t/compile_commands.json 2>&1 | FileCheck %s
-// CHECK: unused
+// CHECK: {{.*}}/unused.c:1: warning: Function 'unused' is unused
 
 //--- used.c
 void used() {}
@@ -14,16 +15,16 @@ int main() { used(); return 0; }
 //--- unused.c
 void unused() {}
 
-//--- compile_commands.json
+//--- compile_commands.json.in
 [
   {
-    "directory": "%t",
-    "command": "cc -c %t/used.c",
-    "file": "%t/used.c"
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/used.c",
+    "file": "TESTDIR/used.c"
   },
   {
-    "directory": "%t",
-    "command": "cc -c %t/unused.c",
-    "file": "%t/unused.c"
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/unused.c",
+    "file": "TESTDIR/unused.c"
   }
 ]
