@@ -2,60 +2,43 @@ name: C/C++ CI
 
 on:
   push:
+    branches: main
   pull_request:
 
 jobs:
-  build:
-    name: Build and run tests
-    runs-on: ubuntu-latest
+  llvm:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        version: [13, 14, 15, 16, 17, 18]
+        os: [ubuntu-22.04]
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
+    - name: Install package repository for Clang/LLVM ${{ matrix.version }}
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh ${{ matrix.version }}
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          # Install build tools, ninja (if used), and LLVM (provides FileCheck and llvm-lit)
-          sudo apt-get install -y cmake build-essential ninja-build llvm
+    - name: Install build prerequisites and Clang/LLVM ${{ matrix.version }}
+      run: |
+        sudo apt-get -y remove llvm-14-dev llvm-15-dev
+        sudo apt-get -y install build-essential \
+                                cmake \
+                                libcurl4-openssl-dev \
+                                libedit-dev \
+                                llvm-${{ matrix.version }}-dev \
+                                libclang-${{ matrix.version }}-dev
 
-      - name: Set up llvm-lit
-        run: |
-          # Create llvm-lit symlink from the lit.py script in LLVM installation
-          LIT_PATH=$(find /usr/lib/llvm-*/build/utils/lit/lit.py -print -quit 2>/dev/null || true)
-          if [ -n "$LIT_PATH" ]; then
-            sudo ln -sf "$LIT_PATH" /usr/local/bin/llvm-lit
-          else
-            echo "Warning: lit.py not found in LLVM installation"
-          fi
+    - name: Build xunused for Clang/LLVM ${{ matrix.version }}
+      run: |
+        mkdir build
+        cmake -B build
+        make -C build
 
-      - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build
-        run: cmake --build build -- -j
-
-      - name: Locate xunused binary and add to PATH
-        run: |
-          XUNUSED_PATH=$(find build -type f -name xunused -print -quit || true)
-          if [ -z "$XUNUSED_PATH" ]; then
-            echo "xunused binary not found"
-            ls -R build || true
-            exit 1
-          fi
-          echo "$(dirname "$XUNUSED_PATH")" >> $GITHUB_PATH
-
-      - name: Show xunused version (sanity)
-        run: |
-          if ! command -v xunused >/dev/null 2>&1; then
-            echo "xunused not in PATH"; exit 1
-          fi
-          xunused --version || true
-
-      - name: Run llvm-lit tests
-        # Use llvm-lit from the Ubuntu llvm package (do not install lit via pip)
-        run: llvm-lit -v tests
+    - name: Run tests
+      run: cmake --build build --target check
