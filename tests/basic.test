@@ -6,7 +6,7 @@
 // RUN: split-file %s %t
 // RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
 // RUN: xunused %t/compile_commands.json 2>&1 | FileCheck %s
-// CHECK: {{.*}}/unused.c:1: warning: Function 'unused' is unused
+// CHECK: unused.c:1: warning: Function 'unused' is unused
 
 //--- used.c
 void used() {}

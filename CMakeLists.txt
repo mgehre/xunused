@@ -14,6 +14,8 @@ find_package(LLVM  ${LLVM_VERSION_REQUIRED} CONFIG REQUIRED)
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
+find_package(Python3 COMPONENTS Interpreter)
+
 if (LLVM_VERSION_MAJOR GREATER_EQUAL 16)
     if (LLVM_VERSION_MAJOR GREATER_EQUAL 18)
         find_package(Clang ${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR} CONFIG REQUIRED)
@@ -85,3 +87,26 @@ endif (XUNUSED_LINK_LLVM_DYLIB)
 target_link_libraries(xunused PRIVATE ${XUNUSED_CLANG_LIBS} ${XUNUSED_LLVM_LIBS})
 
 install(TARGETS xunused DESTINATION bin)
+
+# Add a check target to run lit tests
+# Find lit.py in the LLVM installation
+file(GLOB_RECURSE LIT_PY_PATHS "${LLVM_LIBRARY_DIRS}/../build/utils/lit/lit.py")
+list(LENGTH LIT_PY_PATHS LIT_PY_COUNT)
+if(LIT_PY_COUNT GREATER 0)
+    list(GET LIT_PY_PATHS 0 LIT_PY)
+    message(STATUS "Found lit.py at: ${LIT_PY}")
+    
+    # Find LLVM tools directory (for FileCheck, etc.)
+    get_filename_component(LLVM_TOOLS_DIR "${LLVM_DIR}/../bin" ABSOLUTE)
+    
+    add_custom_target(check
+        COMMAND ${CMAKE_COMMAND} -E env 
+            "PATH=$<TARGET_FILE_DIR:xunused>:${LLVM_TOOLS_DIR}:$ENV{PATH}"
+            ${Python3_EXECUTABLE} ${LIT_PY} -v ${CMAKE_SOURCE_DIR}/tests
+        DEPENDS xunused
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMENT "Running lit tests"
+    )
+else()
+    message(STATUS "lit.py not found in LLVM installation, check target will not be available")
+endif()

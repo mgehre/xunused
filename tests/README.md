@@ -13,15 +13,36 @@ You need the following tools installed:
 
 ### Running the Tests
 
+#### Using the `check` target (recommended)
+
+The simplest way to run tests is using the `check` target:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+cmake --build build --target check
+```
+
+The `check` target automatically:
+- Finds `lit.py` from your LLVM installation
+- Sets up the correct PATH to include the xunused binary and LLVM tools (FileCheck, etc.)
+- Runs the tests with proper configuration
+
+#### Manual test execution
+
+If you want to run tests manually:
+
 1. **Build xunused**:
    ```bash
    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
    cmake --build build
    ```
 
-2. **Add xunused to PATH**:
+2. **Add xunused and LLVM tools to PATH**:
    ```bash
    export PATH="$(pwd)/build:$PATH"
+   # Also add LLVM tools directory for FileCheck
+   export PATH="/usr/lib/llvm-18/bin:$PATH"
    ```
 
 3. **Set up llvm-lit** (if not already available):
