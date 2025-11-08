@@ -94,10 +94,18 @@ set(LIT_PY "${LLVM_LIBRARY_DIRS}/../build/utils/lit/lit.py")
 if(EXISTS "${LIT_PY}")
     message(STATUS "Found lit.py at: ${LIT_PY}")
     
+    # Configure the site-specific configuration file
+    set(XUNUSED_TOOLS_DIR "${CMAKE_BINARY_DIR}")
+    set(TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}")
+    set(CMAKE_CURRENT_SOURCE_DIR "${CMAKE_SOURCE_DIR}/tests")
+    configure_file(
+        ${CMAKE_SOURCE_DIR}/tests/lit.site.cfg.py.in
+        ${CMAKE_BINARY_DIR}/tests/lit.site.cfg.py
+        @ONLY
+    )
+    
     add_custom_target(check
-        COMMAND ${CMAKE_COMMAND} -E env 
-            "PATH=$<TARGET_FILE_DIR:xunused>:${LLVM_TOOLS_BINARY_DIR}:$ENV{PATH}"
-            ${Python3_EXECUTABLE} ${LIT_PY} -v ${CMAKE_SOURCE_DIR}/tests
+        COMMAND ${Python3_EXECUTABLE} ${LIT_PY} -v ${CMAKE_BINARY_DIR}/tests
         DEPENDS xunused
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
         COMMENT "Running lit tests"
