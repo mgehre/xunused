@@ -1,0 +1,29 @@
+// This is an LLVM-style lit test that uses FileCheck.
+// It creates a tiny two-file project: used.c and unused.c
+// Then runs xunused on the temp directory and pipes the output into FileCheck.
+//
+// RUN: rm -rf %t && mkdir -p %t
+// RUN: split-file %s %t
+// RUN: xunused %t/compile_commands.json 2>&1 | FileCheck %s
+// CHECK: unused
+
+//--- used.c
+void used() {}
+int main() { used(); return 0; }
+
+//--- unused.c
+void unused() {}
+
+//--- compile_commands.json
+[
+  {
+    "directory": "%t",
+    "command": "cc -c %t/used.c",
+    "file": "%t/used.c"
+  },
+  {
+    "directory": "%t",
+    "command": "cc -c %t/unused.c",
+    "file": "%t/unused.c"
+  }
+]

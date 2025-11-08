@@ -41,7 +41,7 @@ You need the following tools installed:
 ## Test Structure
 
 - `lit.cfg.py`: Configuration file for the lit test runner
-- `TestCases/`: Directory containing individual test cases
+- Test files (`.test`, `.c`, `.cpp`, `.sh`) in the `tests/` directory
 - Each test file uses LLVM-style `RUN:` and `CHECK:` directives
 
 ## Writing Tests
@@ -50,5 +50,6 @@ Tests use the LLVM FileCheck format:
 - `RUN:` lines specify commands to execute
 - `CHECK:` lines specify patterns to match in the output
 - `%t` is a temporary directory for test artifacts
+- `split-file` can be used to embed multiple input files in a single test
 
-See `TestCases/unused.test` for an example.
+See `basic.test` for an example using `split-file`.
