@@ -1,0 +1,37 @@
+// This is an LLVM-style lit test that uses FileCheck.
+// The test checks that a member function is not reported as 'unused' if
+// its definition has a definition-specific decoration, such as 'const' specifier. 
+//
+// RUN: rm -rf %t && mkdir -p %t
+// RUN: split-file %s %t
+// RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
+// RUN: xunused %t/compile_commands.json 2>&1 | FileCheck %s
+// CHECK-NOT: decoration.cc:2: warning: Function 'X::fun' is unused
+
+//--- decoration.h
+class X {
+    public:
+        void fun(int); // declaration USR; used by the second loop
+};
+
+//--- decoration.cc
+#include "decoration.h"
+void X::fun(const int) {} 
+
+//--- decoration-main.cc
+#include "decoration.h"
+int main() { X x; x.fun(0); return 0; }
+
+//--- compile_commands.json.in
+[
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/decoration.cc",
+    "file": "TESTDIR/decoration.cc"
+  },
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/decoration-main.cc",
+    "file": "TESTDIR/decoration-main.cc"
+  }
+]
