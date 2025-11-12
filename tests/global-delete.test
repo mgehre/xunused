@@ -1,0 +1,23 @@
+// This is an LLVM-style lit test that uses FileCheck.
+//
+// RUN: rm -rf %t && mkdir -p %t
+// RUN: split-file %s %t
+// RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
+// RUN: xunused %t/compile_commands.json 2>&1 | FileCheck %s
+// CHECK-NOT: global-delete.cc:4: warning: Function 'operator delete' is unused
+
+//--- global-delete.cc
+#include <cstddef>
+#include <stdlib.h>
+#include <new>
+void operator delete(void* ptr) noexcept { std::free(ptr); } 
+int main() { auto v = new int(5); delete v; return 0; }
+
+//--- compile_commands.json.in
+[
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/global-delete.cc",
+    "file": "TESTDIR/global-delete.cc"
+  }
+]

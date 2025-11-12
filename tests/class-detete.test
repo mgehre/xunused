@@ -1,0 +1,26 @@
+// This is an LLVM-style lit test that uses FileCheck.
+//
+// RUN: rm -rf %t && mkdir -p %t
+// RUN: split-file %s %t
+// RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
+// RUN: xunused %t/compile_commands.json 2>&1 | FileCheck %s
+// CHECK-NOT: class-delete.cc:7: warning: Function 'X::operator delete' is unused
+
+//--- class-delete.cc
+#include <new>
+#include <cstddef>
+class X {
+    public:
+        void operator delete(void* ptr) noexcept;
+};
+void X::operator delete(void* ptr) noexcept { ::operator delete(ptr); }
+int main() { auto p = new X(); delete p; return 0; }
+
+//--- compile_commands.json.in
+[
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/class-delete.cc",
+    "file": "TESTDIR/class-delete.cc"
+  }
+]
