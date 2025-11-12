@@ -11,7 +11,7 @@
 //--- decoration.h
 class X {
     public:
-        void fun(int); // declaration USR; used by the second loop
+        void fun(int);
 };
 
 //--- decoration.cc
