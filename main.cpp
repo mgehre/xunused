@@ -132,8 +132,14 @@ public:
     if (!FD)
       return;
 
+    // ignore uses of compiler-generated declarations
+    if (FD->isImplicit())
+        return;
+
+    // ignore uses of declarations mentioned in a system header
     if (SM->isInSystemHeader(FD->getSourceRange().getBegin()))
       return;
+
     if (FD->isTemplateInstantiation()) {
       FD = FD->getTemplateInstantiationPattern();
       assert(FD);
@@ -202,6 +208,15 @@ public:
     } else if (const auto *R = Result.Nodes.getNodeAs<CXXConstructExpr>(
                    "cxxConstructExpr")) {
       handleUse(R->getConstructor(), Result.SourceManager);
+    } else if (const auto *R = Result.Nodes.getNodeAs<CXXNewExpr>("cxxNewExpr")) {
+        if (const auto opNew = R->getOperatorNew())
+            handleUse(opNew, Result.SourceManager);
+        // a new expression calls operator delete on initialization failures
+        if (const auto opDelete = R->getOperatorDelete())
+            handleUse(opDelete, Result.SourceManager);
+    } else if (const auto *R = Result.Nodes.getNodeAs<CXXDeleteExpr>("cxxDeleteExpr")) {
+        if (const auto opDelete = R->getOperatorDelete())
+            handleUse(opDelete, Result.SourceManager);
     }
   }
 
@@ -215,6 +230,8 @@ public:
     Matcher.addMatcher(
         functionDecl(isDefinition(), unless(isImplicit())).bind("fnDecl"),
         &Handler);
+    Matcher.addMatcher(cxxNewExpr().bind("cxxNewExpr"), &Handler);
+    Matcher.addMatcher(cxxDeleteExpr().bind("cxxDeleteExpr"), &Handler);
     Matcher.addMatcher(declRefExpr().bind("declRef"), &Handler);
     Matcher.addMatcher(memberExpr().bind("memberRef"), &Handler);
     Matcher.addMatcher(cxxConstructExpr().bind("cxxConstructExpr"), &Handler);

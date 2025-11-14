@@ -1,0 +1,26 @@
+// This is an LLVM-style lit test that uses FileCheck.
+//
+// RUN: rm -rf %t && mkdir -p %t
+// RUN: split-file %s %t
+// RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
+// RUN: xunused %t/compile_commands.json 2>&1 | FileCheck %s
+// CHECK-NOT: class-new.cc:7: warning: Function 'X::operator new' is unused
+
+//--- class-new.cc
+#include <new>
+#include <cstddef>
+class X {
+    public:
+        void* operator new(size_t size);
+};
+void *X::operator new(size_t size) { return ::operator new(size); }
+int main() { auto p = new X(); return 0; }
+
+//--- compile_commands.json.in
+[
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/class-new.cc",
+    "file": "TESTDIR/class-new.cc"
+  }
+]
