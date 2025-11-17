@@ -78,7 +78,7 @@ public:
   void finalize(const SourceManager &SM) {
     std::unique_lock<std::mutex> LockGuard(Mutex);
 
-    for (const auto declaration : Defs) {
+    for (const auto declaration: Defs) {
       std::string USR;
       if (!getUSRForDecl(declaration, USR))
         continue;
@@ -101,7 +101,7 @@ public:
       //    it_inserted.first->first << " uses: " << it_inserted.first->second.Uses << "\n";
     }
 
-    for (auto *F : Uses) {
+    for (const auto F: Uses) {
       std::string USR;
       if (!getUSRForDecl(F, USR))
         continue;
