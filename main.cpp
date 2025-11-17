@@ -38,7 +38,7 @@ struct DeclLoc {
 };
 
 struct DefInfo {
-  const FunctionDecl *Definition; // XXX: perhaps a dangling pointer (created during parsing a single TU)
+  const FunctionDecl *Definition;
   size_t Uses;
   std::string Name;
   std::string Filename;
@@ -60,18 +60,6 @@ bool getUSRForDecl(const Decl *Decl, std::string &USR) {
   return true;
 }
 
-// TODO: use in Uses and Defs sets to exclude duplicates
-// (i.e., when multiple FunctionDecl reference a single object)
-struct FunctionDeclPtrLess {
-    bool operator()(const FunctionDecl *f1, const FunctionDecl *f2) const {
-        std::string USR1;
-        getUSRForDecl(f1, USR1);
-        std::string USR2;
-        getUSRForDecl(f2, USR2);
-        return USR1 < USR2;
-    }
-};
-
 /// Returns all declarations that are not the definition of F
 std::vector<DeclLoc> getDeclarations(const FunctionDecl *F,
                                      const SourceManager &SM) {
@@ -91,13 +79,12 @@ public:
   void finalize(const SourceManager &SM) {
     std::unique_lock<std::mutex> LockGuard(Mutex);
 
-    std::vector<const FunctionDecl *> UnusedDefs;
-
     for (auto declaration : Defs) {
       std::string USR;
-      if (!getUSRForDecl(declaration, USR))
+      if (!getUSRForDecl(declaration, USR)) {
+        llvm::errs() << "found new definition: " << USR << "\n";
         continue;
-      // llvm::errs() << "UnusedDefs: " << USR << "\n";
+      }
 
       const auto F = declaration->getDefinition();
       assert(F);
@@ -114,22 +101,15 @@ public:
       it_inserted.first->second.Declarations = getDeclarations(F, SM);
     }
 
-    // Weak functions are not the definitive definition. Remove it from
-    // Defs before checking which uses we need to consider in other TUs,
-    // so the functions overwritting the weak definition here are marked
-    // as used.
-    // discard_if(Defs, [](const FunctionDecl *FD) { return FD->isWeak(); });
-
     for (auto *F : Uses) {
-      // llvm::errs() << "ExternalUses: " << F->getNameAsString() << "\n";
       std::string USR;
       if (!getUSRForDecl(F, USR))
         continue;
-      // llvm::errs() << "ExternalUses: " << USR << "\n";
       auto it_inserted = AllDecls.emplace(std::move(USR), DefInfo{nullptr, 1});
       if (!it_inserted.second) {
         it_inserted.first->second.Uses++;
       }
+      llvm::errs() << "saw " << F->getNameAsString() << " USR: " << USR << " uses: " << it_inserted.first->second.Uses <<  "\n";
     }
   }
 
