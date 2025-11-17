@@ -52,7 +52,6 @@ std::map<std::string, DefInfo> AllDecls;
 bool getUSRForDecl(const Decl *Decl, std::string &USR) {
   llvm::SmallVector<char, 128> Buff;
 
-  // TODO: use idempotent Decl->getUSRForDecl()?
   if (index::generateUSRForDecl(Decl, Buff))
     return false;
 
@@ -79,12 +78,10 @@ public:
   void finalize(const SourceManager &SM) {
     std::unique_lock<std::mutex> LockGuard(Mutex);
 
-    for (auto declaration : Defs) {
+    for (const auto declaration : Defs) {
       std::string USR;
-      if (!getUSRForDecl(declaration, USR)) {
-        llvm::errs() << "found new definition: " << USR << "\n";
+      if (!getUSRForDecl(declaration, USR))
         continue;
-      }
 
       const auto F = declaration->getDefinition();
       assert(F);
@@ -99,6 +96,9 @@ public:
       it_inserted.first->second.Line = SM.getSpellingLineNumber(Begin);
 
       it_inserted.first->second.Declarations = getDeclarations(F, SM);
+
+      // llvm::errs() << "saw definition: " << declaration->getNameAsString() << " USR: " <<
+      //    it_inserted.first->first << " uses: " << it_inserted.first->second.Uses << "\n";
     }
 
     for (auto *F : Uses) {
@@ -109,7 +109,8 @@ public:
       if (!it_inserted.second) {
         it_inserted.first->second.Uses++;
       }
-      llvm::errs() << "saw " << F->getNameAsString() << " USR: " << USR << " uses: " << it_inserted.first->second.Uses <<  "\n";
+      // llvm::errs() << "saw usage: " << F->getNameAsString() << " USR: " << it_inserted.first->first <<
+      //    " uses: " << it_inserted.first->second.Uses << "\n";
     }
   }
 
