@@ -93,7 +93,7 @@ public:
 
     std::vector<const FunctionDecl *> UnusedDefs;
 
-    for (auto *F : Defs) {
+    for (auto declaration : Defs) {
       std::string USR;
       if (!getUSRForDecl(declaration, USR))
         continue;
