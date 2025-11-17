@@ -214,7 +214,7 @@ class XUnusedASTConsumer : public ASTConsumer {
 public:
   XUnusedASTConsumer() {
     Matcher.addMatcher(
-        functionDecl(unless(isImplicit())).bind("fnDecl"),
+        functionDecl(isDefinition(), unless(isImplicit())).bind("fnDecl"),
         &Handler);
     Matcher.addMatcher(cxxNewExpr().bind("cxxNewExpr"), &Handler);
     Matcher.addMatcher(cxxDeleteExpr().bind("cxxDeleteExpr"), &Handler);
