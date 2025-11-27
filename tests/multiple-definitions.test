@@ -1,0 +1,31 @@
+// This is an LLVM-style lit test that uses FileCheck.
+// The test checks that a function is not reported as 'unused' when at
+// least one translation unit defines that function without using it
+// while at least one other translation unit both defines and uses it.
+//
+// RUN: rm -rf %t && mkdir -p %t
+// RUN: split-file %s %t
+// RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
+// RUN: xunused %t/compile_commands.json 2>&1 | FileCheck %s
+// CHECK-NOT: justDefinition.cc:1: warning: Function 'F' is unused
+
+//--- definitionAndUse.cc
+void F() {}
+int main() { F(); return 0; }
+
+//--- justDefinition.cc
+void F() {}
+
+//--- compile_commands.json.in
+[
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/definitionAndUse.cc",
+    "file": "TESTDIR/definitionAndUse.cc"
+  },
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/justDefinition.cc",
+    "file": "TESTDIR/justDefinition.cc"
+  }
+]

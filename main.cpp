@@ -38,7 +38,7 @@ struct DeclLoc {
 };
 
 struct DefInfo {
-  const FunctionDecl *Definition;
+  size_t Definitions;
   size_t Uses;
   std::string Name;
   std::string Filename;
@@ -78,22 +78,16 @@ public:
   void finalize(const SourceManager &SM) {
     std::unique_lock<std::mutex> LockGuard(Mutex);
 
-    std::vector<const FunctionDecl *> UnusedDefs;
-
-    std::set_difference(Defs.begin(), Defs.end(), Uses.begin(), Uses.end(),
-                        std::back_inserter(UnusedDefs));
-
-    for (const auto declaration : UnusedDefs) {
+    for (const auto declaration: Defs) {
       std::string USR;
       if (!getUSRForDecl(declaration, USR))
         continue;
-      // llvm::errs() << "UnusedDefs: " << USR << "\n";
 
       const auto F = declaration->getDefinition();
       assert(F);
-      auto it_inserted = AllDecls.emplace(std::move(USR), DefInfo{F, 0});
+      auto it_inserted = AllDecls.emplace(std::move(USR), DefInfo{1, 0});
       if (!it_inserted.second) {
-        it_inserted.first->second.Definition = F;
+        it_inserted.first->second.Definitions++;
       }
       it_inserted.first->second.Name = F->getQualifiedNameAsString();
 
@@ -102,29 +96,23 @@ public:
       it_inserted.first->second.Line = SM.getSpellingLineNumber(Begin);
 
       it_inserted.first->second.Declarations = getDeclarations(F, SM);
+
+      // llvm::errs() << "saw definition: " << declaration->getNameAsString() << " USR: " << it_inserted.first->first <<
+      //    " definitions: " << it_inserted.first->second.Definitions <<
+      //    " uses: " << it_inserted.first->second.Uses << "\n";
     }
 
-    // Weak functions are not the definitive definition. Remove it from
-    // Defs before checking which uses we need to consider in other TUs,
-    // so the functions overwritting the weak definition here are marked
-    // as used.
-    discard_if(Defs, [](const FunctionDecl *FD) { return FD->isWeak(); });
-
-    std::vector<const FunctionDecl *> ExternalUses;
-
-    std::set_difference(Uses.begin(), Uses.end(), Defs.begin(), Defs.end(),
-                        std::back_inserter(ExternalUses));
-
-    for (auto *F : ExternalUses) {
-      // llvm::errs() << "ExternalUses: " << F->getNameAsString() << "\n";
+    for (const auto F: Uses) {
       std::string USR;
       if (!getUSRForDecl(F, USR))
         continue;
-      // llvm::errs() << "ExternalUses: " << USR << "\n";
-      auto it_inserted = AllDecls.emplace(std::move(USR), DefInfo{nullptr, 1});
+      auto it_inserted = AllDecls.emplace(std::move(USR), DefInfo{0, 1});
       if (!it_inserted.second) {
         it_inserted.first->second.Uses++;
       }
+      // llvm::errs() << "saw usage: " << F->getNameAsString() << " USR: " << it_inserted.first->first <<
+      //    " definitions: " << it_inserted.first->second.Definitions <<
+      //    " uses: " << it_inserted.first->second.Uses << "\n";
     }
   }
 
@@ -294,7 +282,7 @@ int main(int argc, const char **argv) {
 
   for (auto &KV : AllDecls) {
     DefInfo &I = KV.second;
-    if (I.Definition && I.Uses == 0) {
+    if (I.Definitions > 0 && I.Uses == 0) {
       llvm::errs() << I.Filename << ":" << I.Line << ": warning:"
                    << " Function '" << I.Name << "' is unused\n";
       for (auto &D : I.Declarations) {
