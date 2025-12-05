@@ -1,0 +1,21 @@
+// This is an LLVM-style lit test that uses FileCheck.
+//
+// RUN: rm -rf %t && mkdir -p %t
+// RUN: split-file %s %t
+// RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
+// RUN: xunused %t/compile_commands.json 2>&1 | FileCheck %s
+// CHECK-NOT: lambda.cc:3: warning: Function 'main()::(anonymous class)::operator()' is unused
+
+//--- lambda.cc
+using Pointer = void (*)();
+void F(Pointer p) { p(); }
+int main() { F([](){}); return 0; }
+
+//--- compile_commands.json.in
+[
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/lambda.cc",
+    "file": "TESTDIR/lambda.cc"
+  }
+]

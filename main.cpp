@@ -162,6 +162,7 @@ public:
       if (!Result.SourceManager->isWrittenInMainFile(Begin))
         return;
 
+      bool usedLambdaOperator = false;
       auto *MD = dyn_cast<CXXMethodDecl>(F);
       if (MD) {
         if (MD->isVirtual()
@@ -174,6 +175,8 @@ public:
           return; // overriding method
         if (isa<CXXDestructorDecl>(MD))
           return; // We don't see uses of destructors.
+        if (MD->getNameAsString() == "operator()" && MD->getParent() && MD->getParent()->isLambda())
+            usedLambdaOperator = MD->isUsed();
       }
 
       if (F->isMain())
@@ -186,7 +189,7 @@ public:
       Defs.insert(F->getCanonicalDecl());
 
       // __attribute__((constructor())) are always used
-      if (F->hasAttr<ConstructorAttr>())
+      if (F->hasAttr<ConstructorAttr>() || usedLambdaOperator)
         handleUse(F, Result.SourceManager);
 
     } else if (const auto *R = Result.Nodes.getNodeAs<DeclRefExpr>("declRef")) {
