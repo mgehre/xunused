@@ -175,8 +175,11 @@ public:
           return; // overriding method
         if (isa<CXXDestructorDecl>(MD))
           return; // We don't see uses of destructors.
-        if (MD->getNameAsString() == "operator()" && MD->getParent() && MD->getParent()->isLambda())
+        if (MD->getNameAsString() == "operator()" && MD->getParent() && MD->getParent()->isLambda()) {
+            // This should be sufficient to detect used lambdas because lambdas are objects with "no linkage"
+            // and cannot be used outside of the current TU.
             usedLambdaOperator = MD->isUsed();
+        }
       }
 
       if (F->isMain())
