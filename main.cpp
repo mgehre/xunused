@@ -116,13 +116,32 @@ public:
     }
   }
 
+  // Returns false if this is a compiler-generated function or a method of a compiler-generated class.
+  // Returns true otherwise.
+  bool spelledInSource(const FunctionDecl *func) {
+    if (func->isImplicit())
+        return false;
+
+    // LLVM does not mark automatically every member of an isImplicit() class as isImplicit(),
+    // e.g., user-defined lambda operator(). Such methods can be explicitly unused (i.e., there
+    // is no explicit operator() call) but still implicitly used via some implicit conversion
+    // (to a function pointer). To avoid these complexities, and as a result, false 'unused'
+    // positives, we treat all methods of an implicit class as implicit.
+    if (const auto method = dyn_cast<CXXMethodDecl>(func))
+        if (const auto record = method->getParent())
+            if (record->isImplicit())
+                return false;
+
+    return true;
+  }
+
   void handleUse(const ValueDecl *D, const SourceManager *SM) {
     auto *FD = dyn_cast<FunctionDecl>(D);
     if (!FD)
       return;
 
     // ignore uses of compiler-generated declarations
-    if (FD->isImplicit())
+    if (!spelledInSource(FD))
         return;
 
     // ignore uses of declarations mentioned in a system header
@@ -162,7 +181,6 @@ public:
       if (!Result.SourceManager->isWrittenInMainFile(Begin))
         return;
 
-      bool usedLambdaOperator = false;
       auto *MD = dyn_cast<CXXMethodDecl>(F);
       if (MD) {
         if (MD->isVirtual()
@@ -175,14 +193,12 @@ public:
           return; // overriding method
         if (isa<CXXDestructorDecl>(MD))
           return; // We don't see uses of destructors.
-        if (MD->getNameAsString() == "operator()" && MD->getParent() && MD->getParent()->isLambda()) {
-            // This should be sufficient to detect used lambdas because lambdas are objects with "no linkage"
-            // and cannot be used outside of the current TU.
-            usedLambdaOperator = MD->isUsed();
-        }
       }
 
       if (F->isMain())
+        return;
+
+      if (!spelledInSource(F))
         return;
 #if 0
       llvm::errs() << "FunctionDecl ";
@@ -192,7 +208,7 @@ public:
       Defs.insert(F->getCanonicalDecl());
 
       // __attribute__((constructor())) are always used
-      if (F->hasAttr<ConstructorAttr>() || usedLambdaOperator)
+      if (F->hasAttr<ConstructorAttr>())
         handleUse(F, Result.SourceManager);
 
     } else if (const auto *R = Result.Nodes.getNodeAs<DeclRefExpr>("declRef")) {
@@ -223,7 +239,7 @@ class XUnusedASTConsumer : public ASTConsumer {
 public:
   XUnusedASTConsumer() {
     Matcher.addMatcher(
-        functionDecl(isDefinition(), unless(isImplicit())).bind("fnDecl"),
+        functionDecl(isDefinition()).bind("fnDecl"),
         &Handler);
     Matcher.addMatcher(cxxNewExpr().bind("cxxNewExpr"), &Handler);
     Matcher.addMatcher(cxxDeleteExpr().bind("cxxDeleteExpr"), &Handler);
