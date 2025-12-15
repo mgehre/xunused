@@ -1,4 +1,6 @@
 // This is an LLVM-style lit test that uses FileCheck.
+// The test checks that unused generated lambda operators (i.e. members of the
+// generated "closure type" class) are not reported as unused.
 //
 // RUN: rm -rf %t && mkdir -p %t
 // RUN: split-file %s %t
