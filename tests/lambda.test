@@ -9,9 +9,13 @@
 // CHECK-NOT: {{.*}}operator(){{.*}}unused
 
 //--- lambda.cc
-using Pointer = void (*)();
-void F(Pointer p) { p(); }
-int main() { F([](){}); return 0; }
+using FunctionPointer = void (*)();
+static void Call(const FunctionPointer f) { f(); }
+int main() {
+  const auto capturelessLambda = [](){};
+  Call(capturelessLambda); // implicit conversion of lambda object to function pointer
+  return 0;
+}
 
 //--- compile_commands.json.in
 [
