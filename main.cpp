@@ -73,6 +73,26 @@ std::vector<DeclLoc> getDeclarations(const FunctionDecl *F,
   return Decls;
 }
 
+// Returns false if this is a compiler-generated function or a method of a compiler-generated class.
+// Returns true otherwise.
+static
+bool isCompilerGenerated(const FunctionDecl *func) {
+  if (func->isImplicit())
+      return false;
+
+  // LLVM does not mark automatically every member of an isImplicit() class as isImplicit(),
+  // e.g., user-defined lambda operator(). Such methods can be explicitly unused (i.e., there
+  // is no explicit operator() call) but still implicitly used via some implicit conversion
+  // (to a function pointer). To avoid these complexities, and as a result, false 'unused'
+  // positives, we treat all methods of an implicit class as implicit.
+  if (const auto method = dyn_cast<CXXMethodDecl>(func))
+      if (const auto record = method->getParent())
+          if (record->isImplicit())
+              return false;
+
+  return true;
+}
+
 class FunctionDeclMatchHandler : public MatchFinder::MatchCallback {
 public:
   void finalize(const SourceManager &SM) {
@@ -114,25 +134,6 @@ public:
       //    " definitions: " << it_inserted.first->second.Definitions <<
       //    " uses: " << it_inserted.first->second.Uses << "\n";
     }
-  }
-
-  // Returns false if this is a compiler-generated function or a method of a compiler-generated class.
-  // Returns true otherwise.
-  bool isCompilerGenerated(const FunctionDecl *func) {
-    if (func->isImplicit())
-        return false;
-
-    // LLVM does not mark automatically every member of an isImplicit() class as isImplicit(),
-    // e.g., user-defined lambda operator(). Such methods can be explicitly unused (i.e., there
-    // is no explicit operator() call) but still implicitly used via some implicit conversion
-    // (to a function pointer). To avoid these complexities, and as a result, false 'unused'
-    // positives, we treat all methods of an implicit class as implicit.
-    if (const auto method = dyn_cast<CXXMethodDecl>(func))
-        if (const auto record = method->getParent())
-            if (record->isImplicit())
-                return false;
-
-    return true;
   }
 
   void handleUse(const ValueDecl *D, const SourceManager *SM) {
