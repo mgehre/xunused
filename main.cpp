@@ -78,7 +78,7 @@ std::vector<DeclLoc> getDeclarations(const FunctionDecl *F,
 static
 bool isCompilerGenerated(const FunctionDecl * const f) {
   if (f->isImplicit())
-      return false;
+      return true;
 
   // LLVM does not automatically mark every member of an isImplicit() class as
   // isImplicit(). For example, isImplicit() is false for generated lambda
@@ -87,9 +87,9 @@ bool isCompilerGenerated(const FunctionDecl * const f) {
   if (const auto method = dyn_cast<CXXMethodDecl>(f))
       if (const auto record = method->getParent())
           if (record->isImplicit())
-              return false;
+              return true;
 
-  return true;
+  return false;
 }
 
 class FunctionDeclMatchHandler : public MatchFinder::MatchCallback {
@@ -140,8 +140,7 @@ public:
     if (!FD)
       return;
 
-    // ignore uses of compiler-generated declarations
-    if (!isCompilerGenerated(FD))
+    if (isCompilerGenerated(FD))
         return;
 
     // ignore uses of declarations mentioned in a system header
@@ -198,8 +197,9 @@ public:
       if (F->isMain())
         return;
 
-      if (!isCompilerGenerated(F))
+      if (isCompilerGenerated(F))
         return;
+
 #if 0
       llvm::errs() << "FunctionDecl ";
       F->printName(llvm::errs());
