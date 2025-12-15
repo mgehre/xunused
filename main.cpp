@@ -118,7 +118,7 @@ public:
 
   // Returns false if this is a compiler-generated function or a method of a compiler-generated class.
   // Returns true otherwise.
-  bool spelledInSource(const FunctionDecl *func) {
+  bool isCompilerGenerated(const FunctionDecl *func) {
     if (func->isImplicit())
         return false;
 
@@ -141,7 +141,7 @@ public:
       return;
 
     // ignore uses of compiler-generated declarations
-    if (!spelledInSource(FD))
+    if (!isCompilerGenerated(FD))
         return;
 
     // ignore uses of declarations mentioned in a system header
@@ -198,7 +198,7 @@ public:
       if (F->isMain())
         return;
 
-      if (!spelledInSource(F))
+      if (!isCompilerGenerated(F))
         return;
 #if 0
       llvm::errs() << "FunctionDecl ";
