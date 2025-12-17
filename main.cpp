@@ -9,6 +9,7 @@
 #include "clang/Index/USRGeneration.h"
 #include "clang/Tooling/AllTUsExecution.h"
 #include "clang/Tooling/Tooling.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
 #include <memory>
 #include <mutex>
@@ -16,6 +17,7 @@
 
 
 using namespace clang;
+using namespace clang::tooling;
 using namespace clang::ast_matchers;
 
 template <class T, class Comp, class Alloc, class Predicate>
@@ -258,7 +260,7 @@ int main(int argc, const char **argv) {
   )";
 
   tooling::ExecutorName.setInitialValue("all-TUs");
-#if 1
+#if 0
   auto Executor = clang::tooling::createExecutorFromCommandLineArgs(
       argc, argv, llvm::cl::getGeneralCategory(), Overview);
   if (!Executor) {
@@ -270,8 +272,18 @@ int main(int argc, const char **argv) {
           new XUnusedFrontendActionFactory()));
 #else
   static llvm::cl::OptionCategory XUnusedCategory("xunused options");
-  CommonOptionsParser op(argc, argv, XUnusedCategory);
-  AllTUsToolExecutor > Executor(op.getCompilations(), /*ThreadCount=*/0);
+  static llvm::cl::opt<bool> reportFunction("report-functions",
+          llvm::cl::desc("Report (to stdout) the number of times a candidate function was used."), llvm::cl::cat(XUnusedCategory));
+  static llvm::cl::opt<bool> noErrOnUnusedFunction("no-err-on-unused-function",
+          llvm::cl::desc("Do not treat unused functions as errors."), llvm::cl::cat(XUnusedCategory));
+
+  auto ExpectedParser = CommonOptionsParser::create(argc, argv, XUnusedCategory);
+  if (!ExpectedParser) {
+      llvm::errs() << ExpectedParser.takeError();
+      return 1;
+  }
+  CommonOptionsParser &op = ExpectedParser.get();
+  AllTUsToolExecutor Executor(op.getCompilations(), /*ThreadCount=*/0);
   auto Err = Executor.execute(std::unique_ptr<XUnusedFrontendActionFactory>(
       new XUnusedFrontendActionFactory()));
 #endif
@@ -280,15 +292,21 @@ int main(int argc, const char **argv) {
     llvm::errs() << llvm::toString(std::move(Err)) << "\n";
   }
 
+  llvm::raw_ostream &os = noErrOnUnusedFunction ? llvm::outs() : llvm::errs();
   for (auto &KV : AllDecls) {
     DefInfo &I = KV.second;
-    if (I.Definitions > 0 && I.Uses == 0) {
-      llvm::errs() << I.Filename << ":" << I.Line << ": warning:"
-                   << " Function '" << I.Name << "' is unused\n";
-      for (auto &D : I.Declarations) {
-        llvm::errs() << D.Filename << ":" << D.Line << ": note:"
-                     << " declared here\n";
+    if (I.Definitions > 0) {
+      if (I.Uses > 0 && !reportFunction)
+          continue;
+      os << I.Filename << ":" << I.Line;
+      if (I.Uses == 0) {
+        os << ": warning:" << " Function '" << I.Name << "' is unused\n";
+      } else {
+        assert(reportFunction);
+        os << " Function '" << I.Name << "' uses=" << I.Uses << "\n";
       }
+      for (auto &D : I.Declarations)
+        os << D.Filename << ":" << D.Line << ": note:" << " declared here\n";
     }
   }
 }
