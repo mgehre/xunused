@@ -213,6 +213,8 @@ public:
   std::set<const FunctionDecl *> Uses;
 };
 
+std::atomic<bool> CompilationError = false;
+
 class XUnusedASTConsumer : public ASTConsumer {
 public:
   XUnusedASTConsumer() {
@@ -227,6 +229,14 @@ public:
   }
 
   void HandleTranslationUnit(ASTContext &Context) override {
+    if (Context.getDiagnostics().hasErrorOccurred()) {
+        auto &DiagEngine = Context.getDiagnostics();
+        llvm::errs() << "Errors:" << Context.getDiagnostics().getNumErrors() << "\n";
+        unsigned DiagID = DiagEngine.getCustomDiagID(clang::DiagnosticsEngine::Fatal, "Aborting execution due to compilation error in TU.");
+        DiagEngine.Report(DiagID);
+        CompilationError = true;
+        return;
+    }
     Matcher.matchAST(Context);
     Handler.finalize(Context.getSourceManager());
   }
@@ -236,12 +246,23 @@ private:
   MatchFinder Matcher;
 };
 
+std::mutex ActionMutex;
 // For each source file provided to the tool, a new FrontendAction is created.
 class XUnusedFrontendAction : public ASTFrontendAction {
 public:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance & /*CI*/,
                                                  StringRef /*File*/) override {
     return std::make_unique<XUnusedASTConsumer>();
+  }
+
+  bool BeginSourceFileAction(clang::CompilerInstance &CI) override {
+      std::unique_lock<std::mutex> LockGuard(ActionMutex);
+      llvm::StringRef fileName = getCurrentFile();
+      if (CompilationError) {
+          llvm::errs() << "Skipping file: " << fileName << " due to previous compilation errors \n";
+          return false;
+      }
+      return true;
   }
 };
 
@@ -278,6 +299,7 @@ int main(int argc, const char **argv) {
 
   if (Err) {
     llvm::errs() << llvm::toString(std::move(Err)) << "\n";
+    return 1;
   }
 
   for (auto &KV : AllDecls) {
@@ -291,4 +313,5 @@ int main(int argc, const char **argv) {
       }
     }
   }
+  return 0;
 }

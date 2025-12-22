@@ -1,0 +1,27 @@
+// This is an LLVM-style lit test that uses FileCheck.
+//
+// RUN: rm -rf %t && mkdir -p %t
+// RUN: split-file %s %t
+// RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
+// RUN: not xunused %t/compile_commands.json 2>&1 | FileCheck %s
+// CHECK: {{.*}}Aborting execution{{.*}}
+
+//--- build-error1.cc
+int main() { return; }
+
+//--- build-error2.cc
+int main() { return; }
+
+//--- compile_commands.json.in
+[
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/build-error1.cc",
+    "file": "TESTDIR/build-error1.cc"
+  },
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/build-error2.cc",
+    "file": "TESTDIR/build-error2.cc"
+  }
+]
