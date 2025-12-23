@@ -129,7 +129,7 @@ set(LIT_PY "${LLVM_LIBRARY_DIRS}/../build/utils/lit/lit.py")
 if(EXISTS "${LIT_PY}")
     message(STATUS "Found lit.py at: ${LIT_PY}")
 
-    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    find_package(Python3 COMPONENTS Interpreter)
 
     # Configure the site-specific configuration file
     set(XUNUSED_TOOLS_DIR "${CMAKE_BINARY_DIR}")

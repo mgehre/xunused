@@ -20,8 +20,8 @@ cmake ..
 make
 ```
 
-If you'd like to build xunused as part of the LLVM build system, make sure to add `-DLLVM_EXTERNAL_PROJECTS=xunused
--DLLVM_EXTERNAL_XUNUSED_SOURCE_DIR=/path/to/xunused` to the cmake options.
+If you'd like to build xunused as part of the LLVM build system, make sure to add
+`-DLLVM_EXTERNAL_PROJECTS=xunused -DLLVM_EXTERNAL_XUNUSED_SOURCE_DIR=/path/to/xunused` to the cmake options.
 
 ## Run it
 
