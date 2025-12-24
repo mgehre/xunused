@@ -260,9 +260,14 @@ int main(int argc, const char **argv) {
   )";
 
   tooling::ExecutorName.setInitialValue("all-TUs");
-#if 0
+  static llvm::cl::OptionCategory XUnusedCategory("xunused options");
+  static llvm::cl::opt<bool> reportFunction("report-functions",
+          llvm::cl::desc("Report (to stdout) the number of times a candidate function was used."), llvm::cl::cat(XUnusedCategory));
+  static llvm::cl::opt<bool> noErrOnUnusedFunction("no-err-on-unused-function",
+          llvm::cl::desc("Print unused functions to stdout instead of stderr."), llvm::cl::cat(XUnusedCategory));
+#if 1
   auto Executor = clang::tooling::createExecutorFromCommandLineArgs(
-      argc, argv, llvm::cl::getGeneralCategory(), Overview);
+      argc, argv, XUnusedCategory, Overview);
   if (!Executor) {
     llvm::errs() << llvm::toString(Executor.takeError()) << "\n";
     return 1;
@@ -271,19 +276,8 @@ int main(int argc, const char **argv) {
       Executor->get()->execute(std::unique_ptr<XUnusedFrontendActionFactory>(
           new XUnusedFrontendActionFactory()));
 #else
-  static llvm::cl::OptionCategory XUnusedCategory("xunused options");
-  static llvm::cl::opt<bool> reportFunction("report-functions",
-          llvm::cl::desc("Report (to stdout) the number of times a candidate function was used."), llvm::cl::cat(XUnusedCategory));
-  static llvm::cl::opt<bool> noErrOnUnusedFunction("no-err-on-unused-function",
-          llvm::cl::desc("Do not treat unused functions as errors."), llvm::cl::cat(XUnusedCategory));
-
-  auto ExpectedParser = CommonOptionsParser::create(argc, argv, XUnusedCategory);
-  if (!ExpectedParser) {
-      llvm::errs() << ExpectedParser.takeError();
-      return 1;
-  }
-  CommonOptionsParser &op = ExpectedParser.get();
-  AllTUsToolExecutor Executor(op.getCompilations(), /*ThreadCount=*/0);
+  CommonOptionsParser op(argc, argv, XUnusedCategory);
+  AllTUsToolExecutor > Executor(op.getCompilations(), /*ThreadCount=*/0);
   auto Err = Executor.execute(std::unique_ptr<XUnusedFrontendActionFactory>(
       new XUnusedFrontendActionFactory()));
 #endif
