@@ -1,6 +1,6 @@
 // This is an LLVM-style lit test.
-// The test checks that xunused returns an error
-// if there is a build error in one of the sources.
+// The test checks that xunused terminates with a non-zero exit code
+// when one of the source files triggers a compilation error.
 //
 // RUN: rm -rf %t && mkdir -p %t
 // RUN: split-file %s %t
@@ -11,7 +11,7 @@
 int main() { return 0; }
 
 //--- build-error2.cc
-#error Test compilation error
+#error Injected compilation error
 
 //--- build-error3.cc
 int main() { return 0; }
