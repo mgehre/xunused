@@ -5,7 +5,7 @@
 // RUN: rm -rf %t && mkdir -p %t
 // RUN: split-file %s %t
 // RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
-// RUN: not xunused %t/compile_commands.json 2>&1
+// RUN: not xunused %t/compile_commands.json
 
 //--- build-error1.cc
 int main() { return 0; }
