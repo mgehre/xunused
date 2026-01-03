@@ -302,6 +302,7 @@ int main(int argc, const char **argv) {
 
   if (Err) {
     llvm::errs() << llvm::toString(std::move(Err)) << "\n";
+    return 1;
   }
 
   for (auto &KV : AllDecls) {

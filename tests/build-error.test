@@ -1,0 +1,36 @@
+// This is an LLVM-style lit test.
+// The test checks that xunused terminates with a non-zero exit code
+// when one of the source files triggers a compilation error.
+//
+// RUN: rm -rf %t && mkdir -p %t
+// RUN: split-file %s %t
+// RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
+// RUN: not xunused %t/compile_commands.json
+
+//--- build-error1.cc
+int main() { return 0; }
+
+//--- build-error2.cc
+#error Injected compilation error
+
+//--- build-error3.cc
+int main() { return 0; }
+
+//--- compile_commands.json.in
+[
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/build-error1.cc",
+    "file": "TESTDIR/build-error1.cc"
+  },
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/build-error2.cc",
+    "file": "TESTDIR/build-error2.cc"
+  },
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/build-error3.cc",
+    "file": "TESTDIR/build-error3.cc"
+  }
+]
