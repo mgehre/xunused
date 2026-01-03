@@ -1,0 +1,27 @@
+// This is an LLVM-style lit test that uses FileCheck.
+// The test checks that unused generated lambda operators (i.e. members of the
+// generated "closure type" class) are not reported as unused.
+//
+// RUN: rm -rf %t && mkdir -p %t
+// RUN: split-file %s %t
+// RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
+// RUN: xunused %t/compile_commands.json 2>&1 | FileCheck %s
+// CHECK-NOT: {{.*}}operator(){{.*}}unused
+
+//--- lambda.cc
+using FunctionPointer = void (*)();
+static void Call(const FunctionPointer f) { f(); }
+int main() {
+  const auto capturelessLambda = [](){};
+  Call(capturelessLambda); // implicit conversion of lambda object to function pointer
+  return 0;
+}
+
+//--- compile_commands.json.in
+[
+  {
+    "directory": "TESTDIR",
+    "command": "cc -c TESTDIR/lambda.cc",
+    "file": "TESTDIR/lambda.cc"
+  }
+]
