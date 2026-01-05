@@ -3,7 +3,7 @@
 // RUN: rm -rf %t && mkdir -p %t
 // RUN: split-file %s %t
 // RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
-// RUN: xunused --report-functions --no-err-on-unused-function %t/compile_commands.json | FileCheck %s
+// RUN: xunused --report-functions %t/compile_commands.json 2>&1 | FileCheck %s
 // CHECK: {{.*}}operator delete{{.*}}uses=1
 
 //--- class-delete.cc

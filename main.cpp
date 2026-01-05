@@ -287,8 +287,6 @@ int main(int argc, const char **argv) {
   static llvm::cl::OptionCategory XUnusedCategory("xunused options");
   static llvm::cl::opt<bool> reportFunction("report-functions",
           llvm::cl::desc("Report (to stdout) the number of times a candidate function was used."), llvm::cl::cat(XUnusedCategory));
-  static llvm::cl::opt<bool> noErrOnUnusedFunction("no-err-on-unused-function",
-          llvm::cl::desc("Print unused functions to stdout instead of stderr."), llvm::cl::cat(XUnusedCategory));
 #if 1
   auto Executor = clang::tooling::createExecutorFromCommandLineArgs(
       argc, argv, XUnusedCategory, Overview);
@@ -311,21 +309,20 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  llvm::raw_ostream &os = noErrOnUnusedFunction ? llvm::outs() : llvm::errs();
   for (auto &KV : AllDecls) {
     DefInfo &I = KV.second;
     if (I.Definitions > 0) {
       if (I.Uses > 0 && !reportFunction)
           continue;
-      os << I.Filename << ":" << I.Line;
+      llvm::errs() << I.Filename << ":" << I.Line;
       if (I.Uses == 0) {
-        os << ": warning:" << " Function '" << I.Name << "' is unused\n";
+        llvm::errs() << ": warning:" << " Function '" << I.Name << "' is unused\n";
       } else {
         assert(reportFunction);
-        os << " Function '" << I.Name << "' uses=" << I.Uses << "\n";
+        llvm::errs() << " Function '" << I.Name << "' uses=" << I.Uses << "\n";
       }
       for (auto &D : I.Declarations)
-        os << D.Filename << ":" << D.Line << ": note:" << " declared here\n";
+        llvm::errs() << D.Filename << ":" << D.Line << ": note:" << " declared here\n";
     }
   }
 }
