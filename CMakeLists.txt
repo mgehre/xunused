@@ -1,14 +1,14 @@
 cmake_minimum_required(VERSION 3.7)
 
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    set(xunused_standalone_build ON)
+    set(XUNUSED_STANDALONE_BUILD ON)
     message(STATUS "xunused: standalone build")
 else()
-    set(xunused_standalone_build OFF)
+    set(XUNUSED_STANDALONE_BUILD OFF)
     message(STATUS "xunused: build as part of LLVM")
 endif()
 
-if (xunused_standalone_build)
+if (XUNUSED_STANDALONE_BUILD)
     project(xunused)
 
     # Let find_package(...) search for the latest version when multiple versions of
@@ -33,14 +33,14 @@ if (xunused_standalone_build)
         message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
     endif (LLVM_VERSION_MAJOR GREATER_EQUAL 16)
 
-    set(xunused_llvm_dir ${LLVM_DIR})
-    set(xunused_include_dirs
+    set(XUNUSED_LLVM_DIR ${LLVM_DIR})
+    set(XUNUSED_INCLUDE_DIRS
         ${LLVM_INCLUDE_DIRS}
         ${CLANG_INCLUDE_DIRS}
     )
 else()
-    set(xunused_llvm_dir ${CMAKE_SOURCE_DIR})
-    set(xunused_include_dirs
+    set(XUNUSED_LLVM_DIR ${CMAKE_SOURCE_DIR})
+    set(XUNUSED_INCLUDE_DIRS
         ${LLVM_SOURCE_DIR}/include
         ${LLVM_EXTERNAL_CLANG_SOURCE_DIR}/include
         ${LLVM_BINARY_DIR}/include
@@ -56,7 +56,7 @@ else()
 endif()
 
 message(STATUS
-  "xunused: configuring for LLVM ${LLVM_VERSION} from ${xunused_llvm_dir}")
+  "xunused: configuring for LLVM ${LLVM_VERSION} from ${XUNUSED_LLVM_DIR}")
 
 # The good default is given by the llvm toolchain installation itself, but still
 # in case both static and shared libraries are available, allow to override that
@@ -72,7 +72,7 @@ option(XUNUSED_LINK_CLANG_DYLIB
 message(STATUS "Link against the LLVM dynamic library: ${XUNUSED_LINK_LLVM_DYLIB}")
 message(STATUS "Link against the Clang dynamic library: ${XUNUSED_LINK_CLANG_DYLIB}")
 
-include_directories(${xunused_include_dirs})
+include_directories(${XUNUSED_INCLUDE_DIRS})
 
 add_definitions(${LLVM_DEFINITIONS})
 add_definitions(${CLANG_DEFINITIONS})
