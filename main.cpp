@@ -9,7 +9,6 @@
 #include "clang/Index/USRGeneration.h"
 #include "clang/Tooling/AllTUsExecution.h"
 #include "clang/Tooling/Tooling.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
 #include <memory>
 #include <mutex>
@@ -17,7 +16,6 @@
 
 
 using namespace clang;
-using namespace clang::tooling;
 using namespace clang::ast_matchers;
 
 template <class T, class Comp, class Alloc, class Predicate>
@@ -311,18 +309,20 @@ int main(int argc, const char **argv) {
 
   for (auto &KV : AllDecls) {
     DefInfo &I = KV.second;
-    if (I.Definitions > 0) {
-      if (I.Uses > 0 && !reportFunction)
-          continue;
-      llvm::errs() << I.Filename << ":" << I.Line;
-      if (I.Uses == 0) {
-        llvm::errs() << ": warning:" << " Function '" << I.Name << "' is unused\n";
-      } else {
-        assert(reportFunction);
-        llvm::errs() << " Function '" << I.Name << "' uses=" << I.Uses << "\n";
-      }
-      for (auto &D : I.Declarations)
-        llvm::errs() << D.Filename << ":" << D.Line << ": note:" << " declared here\n";
+
+    if (!I.Definitions)
+        continue; // assume this function is external to the project being scanned
+
+    if (I.Uses > 0 && !reportFunction)
+        continue; // a used function that does not need to be reported
+
+    if (I.Uses == 0) {
+      llvm::errs() << I.Filename << ":" << I.Line << ": warning: Function '" << I.Name << "' is unused\n";
+    } else {
+      assert(reportFunction);
+      llvm::errs() << I.Filename << ":" << I.Line << ": note: Function '" << I.Name << "' uses=" << I.Uses << "\n";
     }
+    for (auto &D : I.Declarations)
+      llvm::errs() << D.Filename << ":" << D.Line << ": note:" << " declared here\n";
   }
 }
