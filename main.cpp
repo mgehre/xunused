@@ -322,7 +322,7 @@ int main(int argc, const char **argv) {
       assert(reportFunction);
       llvm::errs() << I.Filename << ":" << I.Line << ": note: Function '" << I.Name << "' uses=" << I.Uses << "\n";
     }
-    for (auto &D : I.Declarations)
+    for (const auto &D : I.Declarations)
       llvm::errs() << D.Filename << ":" << D.Line << ": note:" << " declared here\n";
   }
 }
