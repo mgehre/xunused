@@ -74,7 +74,10 @@ endif (XUNUSED_LINK_CLANG_DYLIB)
 if (XUNUSED_LINK_LLVM_DYLIB)
     set(XUNUSED_LLVM_LIBS  "LLVM")
 else (XUNUSED_LINK_LLVM_DYLIB)
-    # Minimal LLVM dependencies for clang tooling frontend
+    # No explicit LLVM static libraries needed. The Clang frontend libraries
+    # automatically resolve their LLVM dependencies through the LLVM dynamic
+    # library (libLLVM-XX.so), avoiding the need to build unnecessary static
+    # LLVM components like X86-specific codegen, MC, BitReader, etc.
     set(XUNUSED_LLVM_LIBS  "")
 endif (XUNUSED_LINK_LLVM_DYLIB)
 
