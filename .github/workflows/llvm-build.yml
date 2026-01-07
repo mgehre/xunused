@@ -34,4 +34,4 @@ jobs:
         cmake --build build --target xunused
 
     - name: Run tests
-      run: cmake --build build --target check
+      run: cmake --build build --target check-xunused
