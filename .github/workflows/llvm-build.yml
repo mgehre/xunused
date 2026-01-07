@@ -32,3 +32,6 @@ jobs:
         mkdir build
         cmake -B build -S llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS=clang -DLLVM_EXTERNAL_PROJECTS=xunused -DLLVM_EXTERNAL_XUNUSED_SOURCE_DIR=..
         make -C build xunused
+
+    - name: Run tests
+      run: cmake --build build --target check
