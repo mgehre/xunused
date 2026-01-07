@@ -75,12 +75,14 @@ if (XUNUSED_LINK_LLVM_DYLIB)
     set(XUNUSED_LLVM_LIBS  "LLVM")
 else (XUNUSED_LINK_LLVM_DYLIB)
     # No explicit LLVM libraries needed here. The Clang static libraries we link
-    # already have LLVM as a transitive dependency (via INTERFACE_LINK_LIBRARIES).
-    # CMake automatically includes LLVM's "LLVM" target, which resolves to the
-    # LLVM shared library on most systems, avoiding the need to explicitly list
-    # and build unnecessary LLVM static components like X86-specific codegen, MC,
-    # BitReader, etc. This significantly reduces build time.
-    set(XUNUSED_LLVM_LIBS  "")
+    # have transitive dependencies on LLVM (via INTERFACE_LINK_LIBRARIES in their
+    # CMake targets). CMake automatically resolves these dependencies, typically
+    # to LLVM's shared library on systems where it's available (e.g., when using
+    # distribution packages). This avoids explicitly listing and building many
+    # unnecessary LLVM static components like X86-specific codegen, MC, BitReader,
+    # etc., significantly reducing build time.
+    # Note: Intentionally empty - dependencies resolved transitively
+    set(XUNUSED_LLVM_LIBS)
 endif (XUNUSED_LINK_LLVM_DYLIB)
 
 target_link_libraries(xunused PRIVATE ${XUNUSED_CLANG_LIBS} ${XUNUSED_LLVM_LIBS})
