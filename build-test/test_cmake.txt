@@ -1,0 +1,2 @@
+# Test with minimal LLVM libraries - just remove them all first
+set(XUNUSED_LLVM_LIBS "")

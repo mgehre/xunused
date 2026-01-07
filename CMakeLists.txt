@@ -74,14 +74,8 @@ endif (XUNUSED_LINK_CLANG_DYLIB)
 if (XUNUSED_LINK_LLVM_DYLIB)
     set(XUNUSED_LLVM_LIBS  "LLVM")
 else (XUNUSED_LINK_LLVM_DYLIB)
-    set(XUNUSED_LLVM_LIBS  "LLVMX86AsmParser"
-                           "LLVMSupport"
-                           "LLVMOption"
-                           "LLVMProfileData"
-                           "LLVMFrontendOpenMP")
-    if (LLVM_VERSION_MAJOR EQUAL 15)
-        list(APPEND XUNUSED_LLVM_LIBS "LLVMWindowsDriver")
-    endif (LLVM_VERSION_MAJOR EQUAL 15)
+    # Minimal LLVM dependencies for clang tooling frontend
+    set(XUNUSED_LLVM_LIBS  "")
 endif (XUNUSED_LINK_LLVM_DYLIB)
 
 target_link_libraries(xunused PRIVATE ${XUNUSED_CLANG_LIBS} ${XUNUSED_LLVM_LIBS})
