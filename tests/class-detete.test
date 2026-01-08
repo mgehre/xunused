@@ -4,7 +4,7 @@
 // RUN: split-file %s %t
 // RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
 // RUN: xunused --report-functions %t/compile_commands.json 2>&1 | FileCheck %s
-// CHECK: {{.*}}operator delete{{.*}}uses=1
+// CHECK: operator delete{{.*}}uses=1
 
 //--- class-delete.cc
 #include <new>
