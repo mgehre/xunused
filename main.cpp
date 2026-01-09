@@ -282,9 +282,12 @@ int main(int argc, const char **argv) {
   )";
 
   tooling::ExecutorName.setInitialValue("all-TUs");
-#if 1
+  static llvm::cl::OptionCategory XUnusedCategory("xunused options");
+  static llvm::cl::opt<bool> reportFunctions("report-functions",
+          llvm::cl::desc("Report (to stdout) the number of times a candidate function was used."), llvm::cl::cat(XUnusedCategory));
+
   auto Executor = clang::tooling::createExecutorFromCommandLineArgs(
-      argc, argv, llvm::cl::getGeneralCategory(), Overview);
+      argc, argv, XUnusedCategory, Overview);
   if (!Executor) {
     llvm::errs() << llvm::toString(Executor.takeError()) << "\n";
     return 1;
@@ -292,13 +295,6 @@ int main(int argc, const char **argv) {
   auto Err =
       Executor->get()->execute(std::unique_ptr<XUnusedFrontendActionFactory>(
           new XUnusedFrontendActionFactory()));
-#else
-  static llvm::cl::OptionCategory XUnusedCategory("xunused options");
-  CommonOptionsParser op(argc, argv, XUnusedCategory);
-  AllTUsToolExecutor > Executor(op.getCompilations(), /*ThreadCount=*/0);
-  auto Err = Executor.execute(std::unique_ptr<XUnusedFrontendActionFactory>(
-      new XUnusedFrontendActionFactory()));
-#endif
 
   if (Err) {
     llvm::errs() << llvm::toString(std::move(Err)) << "\n";
@@ -307,13 +303,20 @@ int main(int argc, const char **argv) {
 
   for (auto &KV : AllDecls) {
     DefInfo &I = KV.second;
-    if (I.Definitions > 0 && I.Uses == 0) {
-      llvm::errs() << I.Filename << ":" << I.Line << ": warning:"
-                   << " Function '" << I.Name << "' is unused\n";
-      for (auto &D : I.Declarations) {
-        llvm::errs() << D.Filename << ":" << D.Line << ": note:"
-                     << " declared here\n";
-      }
+
+    if (!I.Definitions)
+        continue; // assume this function is external to the project being scanned
+
+    if (I.Uses > 0 && !reportFunctions)
+        continue; // a used function that does not need to be reported
+
+    if (I.Uses == 0) {
+      llvm::errs() << I.Filename << ":" << I.Line << ": warning: Function '" << I.Name << "' is unused\n";
+    } else {
+      assert(reportFunctions);
+      llvm::errs() << I.Filename << ":" << I.Line << ": note: Function '" << I.Name << "' uses=" << I.Uses << "\n";
     }
+    for (const auto &D : I.Declarations)
+      llvm::errs() << D.Filename << ":" << D.Line << ": note:" << " declared here\n";
   }
 }

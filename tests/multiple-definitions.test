@@ -6,8 +6,8 @@
 // RUN: rm -rf %t && mkdir -p %t
 // RUN: split-file %s %t
 // RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
-// RUN: xunused %t/compile_commands.json 2>&1 | FileCheck %s
-// CHECK-NOT: justDefinition.cc:1: warning: Function 'F' is unused
+// RUN: xunused --report-functions %t/compile_commands.json 2>&1 | FileCheck %s
+// CHECK: Function 'F' uses=1
 
 //--- definitionAndUse.cc
 void F() {}

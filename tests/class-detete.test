@@ -3,8 +3,8 @@
 // RUN: rm -rf %t && mkdir -p %t
 // RUN: split-file %s %t
 // RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
-// RUN: xunused %t/compile_commands.json 2>&1 | FileCheck %s
-// CHECK-NOT: class-delete.cc:7: warning: Function 'X::operator delete' is unused
+// RUN: xunused --report-functions %t/compile_commands.json 2>&1 | FileCheck %s
+// CHECK: operator delete{{.*}}uses=1
 
 //--- class-delete.cc
 #include <new>

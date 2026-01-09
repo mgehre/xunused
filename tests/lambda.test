@@ -6,7 +6,7 @@
 // RUN: split-file %s %t
 // RUN: sed -e "s|TESTDIR|%t|g" %t/compile_commands.json.in > %t/compile_commands.json
 // RUN: xunused %t/compile_commands.json 2>&1 | FileCheck %s
-// CHECK-NOT: {{.*}}operator(){{.*}}unused
+// CHECK-NOT: operator(){{.*}}unused
 
 //--- lambda.cc
 using FunctionPointer = void (*)();
