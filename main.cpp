@@ -283,7 +283,7 @@ int main(int argc, const char **argv) {
 
   tooling::ExecutorName.setInitialValue("all-TUs");
   static llvm::cl::OptionCategory XUnusedCategory("xunused options");
-  static llvm::cl::opt<bool> reportFunction("report-functions",
+  static llvm::cl::opt<bool> reportFunctions("report-functions",
           llvm::cl::desc("Report (to stdout) the number of times a candidate function was used."), llvm::cl::cat(XUnusedCategory));
 
   auto Executor = clang::tooling::createExecutorFromCommandLineArgs(
@@ -307,13 +307,13 @@ int main(int argc, const char **argv) {
     if (!I.Definitions)
         continue; // assume this function is external to the project being scanned
 
-    if (I.Uses > 0 && !reportFunction)
+    if (I.Uses > 0 && !reportFunctions)
         continue; // a used function that does not need to be reported
 
     if (I.Uses == 0) {
       llvm::errs() << I.Filename << ":" << I.Line << ": warning: Function '" << I.Name << "' is unused\n";
     } else {
-      assert(reportFunction);
+      assert(reportFunctions);
       llvm::errs() << I.Filename << ":" << I.Line << ": note: Function '" << I.Name << "' uses=" << I.Uses << "\n";
     }
     for (const auto &D : I.Declarations)
