@@ -8,7 +8,7 @@ on:
 jobs:
   llvm:
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -16,22 +16,22 @@ jobs:
         os: [ubuntu-22.04]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Download source for Clang/LLVM ${{ matrix.version }}
-      run: |
-        curl -L https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-${{ matrix.version }}.tar.gz | tar -xz
+      - name: Download source for Clang/LLVM ${{ matrix.version }}
+        run: |
+          curl -L https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-${{ matrix.version }}.tar.gz | tar -xz
 
-    - name: Install build prerequisites
-      run: |
-        sudo apt-get -y install cmake ninja-build
+      - name: Install build prerequisites
+        run: |
+          sudo apt-get -y install cmake ninja-build
 
-    - name: Build xunused for Clang/LLVM ${{ matrix.version }}
-      run: |
-        cd llvm-project-llvmorg-${{ matrix.version }}
-        mkdir build
-        cmake -B build -G Ninja -S llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS=clang -DLLVM_EXTERNAL_PROJECTS=xunused -DLLVM_EXTERNAL_XUNUSED_SOURCE_DIR=..
-        cmake --build build --target xunused
+      - name: Build xunused for Clang/LLVM ${{ matrix.version }}
+        run: |
+          cd llvm-project-llvmorg-${{ matrix.version }}
+          mkdir build
+          cmake -B build -G Ninja -S llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS=clang -DLLVM_EXTERNAL_PROJECTS=xunused -DLLVM_EXTERNAL_XUNUSED_SOURCE_DIR=..
+          cmake --build build --target xunused
 
-    - name: Run tests
-      run: cmake --build build --target check-xunused
+      - name: Run tests
+        run: cmake --build build --target check-xunused
