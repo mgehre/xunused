@@ -16,6 +16,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: xunused
 
       - name: Download source for Clang/LLVM ${{ matrix.version }}
         run: |
@@ -25,12 +27,22 @@ jobs:
         run: |
           sudo apt-get -y install cmake ninja-build
 
-      - name: Build xunused for Clang/LLVM ${{ matrix.version }}
+      - name: Setup ccache
+        uses: hendrikmuhs/ccache-action@v1.2.20
+
+      - name: Create the build for Clang/LLVM ${{ matrix.version }} with xunused
         run: |
-          cd llvm-project-llvmorg-${{ matrix.version }}
           mkdir build
-          cmake -B build -G Ninja -S llvm -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS=clang -DLLVM_EXTERNAL_PROJECTS=xunused -DLLVM_EXTERNAL_XUNUSED_SOURCE_DIR=..
-          cmake --build build --target xunused
+          cmake -B build -G Ninja -S llvm-project-llvmorg-${{ matrix.version }}/llvm \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DLLVM_ENABLE_PROJECTS=clang \
+            -DLLVM_EXTERNAL_PROJECTS=xunused \
+            -DLLVM_EXTERNAL_XUNUSED_SOURCE_DIR=${GITHUB_WORKSPACE}/xunused
+
+      - name: Build xunused for Clang/LLVM ${{ matrix.version }}
+        run: cmake --build build --target xunused
 
       - name: Run tests
         run: cmake --build build --target check-xunused
