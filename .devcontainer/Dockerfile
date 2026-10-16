@@ -11,4 +11,4 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     build-essential cmake lsb-release wget software-properties-common gnupg
 
 RUN sudo bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
-RUN sudo apt-get -y install llvm-18-dev libclang-18-dev
+RUN sudo apt-get -y install llvm-15-dev libclang-15-dev
